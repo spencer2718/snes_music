@@ -16,7 +16,7 @@ Files in `tools/reaper/` that use the REAPER Lua API (ReaScript).
 
 ## Export structure
 - The Lua exporter scans the active REAPER project and writes output to a specified directory
-- Output artifacts: intermediate JSON, constrained MIDI, validation report stub
+- Output artifacts: intermediate JSON, constrained MIDI. Validation is handled by the Python CLI (`tools/validate/`), not the Lua exporter.
 - Export must be deterministic — same project state produces identical output
 - Never silently drop unsupported REAPER features — log warnings for anything outside the supported subset
 

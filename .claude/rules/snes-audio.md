@@ -23,7 +23,7 @@ Any code that validates against or references SNES audio limits.
 ## SNESGSS MIDI import constraints
 - Expects one MIDI channel per instrument voice
 - Channels are monophonic — overlapping notes on the same channel are not supported
-- Drum channel uses note-to-sample mapping (typically channel 10)
+- Drum channel: SNESGSS maps drums to SNES channels 7–8 (ch7=hats, ch8=kick/snare/toms). Drum instrument numbers: 10=kick, 11=snare, 12=toms, 13=hats. This is NOT standard MIDI channel 10.
 - Tempo from MIDI tempo events
 - No CC automation support in the base import path
 - No pitch bend in the base import path

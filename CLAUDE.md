@@ -8,15 +8,18 @@ REAPER-first authoring toolchain for SNES music composition. Compose in REAPER's
 
 **SNESGSS** — sole v0.1 target. No other engine adapters in scope.
 
+Current version: v0.2 in progress. See SPEC.md §5a for roadmap.
+
 ## v0.1 supported subset
 
+<!-- Items marked (partial) are collected but not fully implemented. See SPEC.md §5a for version roadmap. -->
 - Note on/off, duration
 - Velocity (only if mapped to a defined engine semantic)
 - Channel/instrument assignment
-- Loop start/end markers
+- Loop start/end markers (partial)
 - Simple tempo map subset
-- Drum split rules
-- Song metadata
+- Drum split rules (partial)
+- Song metadata (partial)
 
 ## REAPER setup
 
@@ -47,7 +50,7 @@ pytest tests/                          # run test suite
 | `docs/decisions/` | Active decision records |
 | `docs/fixtures/` | Test fixtures and expected outputs |
 | `docs/design/` | Design documents and diagrams |
-| `exports/` | Generated export output (gitignored) |
+| `exports/` | Generated export output (tracked) |
 
 ## Repo conventions
 

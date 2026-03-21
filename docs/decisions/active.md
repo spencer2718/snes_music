@@ -10,7 +10,7 @@ Prototype early. If the drawing UX is too limited, move detail to the validation
 
 ## Subagent usage
 - test-runner: YES, use from session 1
-- export-auditor: add when export pipeline exists
+- export-auditor: pipeline exists as of v0.1, activate when MIDI content validation is added in v0.2
 - spec-keeper: NO, the PM web instance fills this role
 
 ## Workflow protocol
@@ -114,3 +114,8 @@ All exit criteria met in session 1. Date: 2026-03-21.
 - ARAM budget estimator with real sample sizes
 - Constrained MIDI content validation in Python (parse and verify, not just existence check)
 - JSFX enhancements (echo config display, ARAM pressure, more than traffic-light)
+
+## v0.2 scope
+North star: hear SNES samples in REAPER during composition.
+Core path: BRR→WAV conversion + RS5K auto-loading.
+See SPEC.md §5a for full roadmap.

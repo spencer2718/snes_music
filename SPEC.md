@@ -44,13 +44,15 @@ SNESGSS defines a workable MIDI-facing subset and has documented import assumpti
 
 ---
 
-## 3. Non-goals for v0.1
+## 3. Non-goals
+
+These non-goals apply across all versions unless explicitly revised in §5a.
 
 1. Not a cross-DAW product.
 2. Not a cycle-accurate SNES audio emulator/VST.
 3. Not a universal exporter for every SNES music engine.
 4. Not a direct compiler for arbitrary REAPER automation, plugin chains, or audio effects.
-5. Not a fully headless `.gsm` authoring pipeline unless the `.gsm` structure proves tractable; v0.1 should not assume that up front.
+5. Not a fully headless `.gsm` authoring pipeline unless the `.gsm` structure proves tractable.
 
 ---
 
@@ -104,6 +106,39 @@ v0.1 export produces:
 - Optional **helper artifacts** for the SNESGSS import/export path
 
 v0.1 does **not** promise native generation of every final runtime asset directly from REAPER alone. Treat "fully direct `.gsm` generation" as a later milestone unless the format is documented or reverse-engineered cleanly.
+
+---
+
+## 5a. Version roadmap
+
+### v0.1 — COMPLETE (2026-03-21)
+Compose in REAPER → validate against SNES constraints → export constrained MIDI + JSON → manual SNESGSS import. All exit criteria met.
+
+### v0.2 — In-REAPER sample preview
+Goal: Hear approximated SNES instrument sounds in real-time while composing.
+
+Key deliverables:
+- BRR-to-WAV conversion pipeline (extract samples from SNESGSS .gsi instruments, convert to WAV)
+- Lua script to auto-load WAV samples into RS5K instances across the 8 REAPER tracks
+- Tempo import verification (test whether SNESGSS respects MIDI tempo or requires manual speed setting)
+- Constrained MIDI content validation in the Python CLI (parse and verify, not just existence)
+- Updated ARAM budget estimator with real sample sizes
+
+Non-goals for v0.2:
+- Cycle-accurate SPC700 audio emulation (the RS5K preview is approximate — right samples, right pitches, not hardware-accurate DSP)
+- Drum channel support (deferred to v0.4+)
+- Direct .gsm generation (deferred to v0.3)
+
+### v0.3 — Direct .gsm generation (tentative)
+Goal: Eliminate the manual SNESGSS GUI import step by writing .gsm project files directly.
+Depends on: reverse-engineering the .gsm format from SNESGSS source code and test projects.
+Risk: If the format is too complex or underdocumented, this may be descoped.
+
+### v0.4+ — Extended features
+- Drum channel support (SNESGSS channels 7–8, instruments 10–13)
+- Multiple songs per project
+- Sound effects support
+- Game integration documentation (WLA DX, PVSnesLib)
 
 ---
 
@@ -496,6 +531,8 @@ Each substantial work session should follow this rhythm:
 
 ## 16. First session plan
 
+> **Historical:** This section describes session 1 planning. All steps were completed 2026-03-21. Retained for reference.
+
 When the PM starts the first CC session, the recommended first instruction sequence is:
 
 1. **"Read SPEC.md, CLAUDE.md, and .claude/rules/. Confirm you understand the project, engine target, v0.1 scope, and non-goals. Summarize in 5 bullets."** — This verifies the harness works.
@@ -531,9 +568,9 @@ These are known ambiguities that should be resolved during implementation, not a
 - What exact REAPER metadata will represent loop markers? (Region markers? Named markers? Custom notation?)
 - Will velocity survive as a meaningful engine semantic in v0.1, or be ignored?
 - What is the minimum useful JSFX UI before it becomes noise? (Traffic light vs. full dashboard)
-- What helper artifacts are actually needed for the manual SNESGSS import path?
+- What helper artifacts are actually needed for the manual SNESGSS import path? **Resolved v0.1:** Constrained MIDI is the primary import artifact. Instruments must be pre-defined in SNESGSS.
 - Is a constrained single-tempo prototype preferable before supporting a tempo-map subset?
-- What is the intermediate JSON schema? (Defer pinning this until after the first Lua exporter pass produces real output.)
+- What is the intermediate JSON schema? (Defer pinning this until after the first Lua exporter pass produces real output.) **Resolved v0.1:** Working schema exists in `exports/snes_export.json` and `docs/fixtures/four_channel_basic/sample_export.json`.
 
 ---
 
