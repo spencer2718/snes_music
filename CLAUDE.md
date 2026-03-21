@@ -32,7 +32,10 @@ Authoring: use "FX menu → Build 16 channels of MIDI routing" on the monitor tr
 
 ## Build/test commands
 
-<!-- None yet. Update this section as commands are established. -->
+```
+python -m tools.validate exports/     # run validator against export output
+pytest tests/                          # run test suite
+```
 
 ## File ownership
 

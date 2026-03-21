@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-03-21T11:15:55.254417+00:00",
+  "engine_target": "SNESGSS",
+  "validator_version": "0.1.0",
+  "status": "PASS",
+  "source_hash": "3ae1f6f920ae8356e2ec7cb7c741ce77f09ac561ad960f2f8246be9f84906ec8",
+  "files": [
+    {
+      "path": "snes_export.json",
+      "sha256": "3ae1f6f920ae8356e2ec7cb7c741ce77f09ac561ad960f2f8246be9f84906ec8"
+    },
+    {
+      "path": "validation_report.txt",
+      "sha256": "08f457bfc5d66644c736f9b20b37de29b4e3397469918b3ac96faff78aff2533"
+    }
+  ]
+}
