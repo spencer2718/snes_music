@@ -18,6 +18,16 @@ REAPER-first authoring toolchain for SNES music composition. Compose in REAPER's
 - Drum split rules
 - Song metadata
 
+## REAPER setup
+
+JSFX files are symlinked into REAPER's Effects folder — edits in the repo are live immediately (JSFX auto-reloads on file change). No manual copy needed after `git pull`.
+
+```
+ln -s /home/spencer/snes/snes_music/tools/reaper ~/.config/REAPER/Effects/snes_music
+```
+
+In REAPER: FX browser > JS > snes_music > snes_channel_monitor
+
 ## Build/test commands
 
 <!-- None yet. Update this section as commands are established. -->
