@@ -28,3 +28,9 @@ Any code that validates against or references SNES audio limits.
 - No CC automation support in the base import path
 - No pitch bend in the base import path
 - SNESGSS has its own instrument/envelope definitions — MIDI is note data only
+
+## SNESGSS tool location
+- Repo: ~/snes/snesgss (sibling to this repo, not inside it)
+- Source: https://github.com/nathancassano/snesgss
+- Run via: `wine ~/snes/snesgss/snesgss.exe` (Linux/Ubuntu)
+- CLI export: `wine ~/snes/snesgss/snesgss.exe filename.gsm -e [path]`
