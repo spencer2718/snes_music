@@ -26,12 +26,15 @@ def main() -> int:
         print(f"Error loading export: {e}", file=sys.stderr)
         return 2
 
-    result = validate(data)
+    result = validate(data, export_dir)
 
     report_path = write_report(export_dir, result)
     report_text = format_report(result)
 
+    midi_path = export_dir / "snes_export.mid"
     output_files = [json_path, report_path]
+    if midi_path.exists():
+        output_files.append(midi_path)
     manifest = generate_manifest(export_dir, result.passed, output_files)
     manifest_path = write_manifest(export_dir, manifest)
 

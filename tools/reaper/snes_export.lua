@@ -274,6 +274,169 @@ local function build_json(project_name, tempo_map, regions, tracks)
 end
 
 ----------------------------------------------------------------------
+-- Constrained MIDI file writer (Format 1, raw binary, no library)
+----------------------------------------------------------------------
+
+local MIDI_PPQ = 480 -- ticks per quarter note
+
+local function write_u8(f, val)
+  f:write(string.char(val & 0xFF))
+end
+
+local function write_u16be(f, val)
+  f:write(string.char((val >> 8) & 0xFF, val & 0xFF))
+end
+
+local function write_u32be(f, val)
+  f:write(string.char(
+    (val >> 24) & 0xFF,
+    (val >> 16) & 0xFF,
+    (val >> 8) & 0xFF,
+    val & 0xFF
+  ))
+end
+
+local function encode_vlq(value)
+  value = math.floor(value + 0.5)
+  if value < 0 then value = 0 end
+  if value < 0x80 then
+    return string.char(value)
+  end
+  local bytes = {}
+  bytes[1] = value & 0x7F
+  value = value >> 7
+  while value > 0 do
+    table.insert(bytes, 1, (value & 0x7F) | 0x80)
+    value = value >> 7
+  end
+  local chars = {}
+  for _, b in ipairs(bytes) do
+    chars[#chars + 1] = string.char(b)
+  end
+  return table.concat(chars)
+end
+
+local function beats_to_ticks(beats)
+  return math.floor(beats * MIDI_PPQ + 0.5)
+end
+
+local function bpm_to_tempo_us(bpm)
+  return math.floor(60000000 / bpm + 0.5)
+end
+
+local function build_tempo_track(tempo_map)
+  local events = {}
+  for _, entry in ipairs(tempo_map) do
+    local tick = beats_to_ticks(entry.position_beats)
+    local us = bpm_to_tempo_us(entry.bpm)
+    -- Meta event: FF 51 03 tt tt tt
+    local data = string.char(
+      0xFF, 0x51, 0x03,
+      (us >> 16) & 0xFF,
+      (us >> 8) & 0xFF,
+      us & 0xFF
+    )
+    events[#events + 1] = { tick = tick, data = data }
+  end
+  -- Sort by tick
+  table.sort(events, function(a, b) return a.tick < b.tick end)
+  -- Build track data with delta times
+  local parts = {}
+  local prev_tick = 0
+  for _, evt in ipairs(events) do
+    local delta = evt.tick - prev_tick
+    parts[#parts + 1] = encode_vlq(delta)
+    parts[#parts + 1] = evt.data
+    prev_tick = evt.tick
+  end
+  -- End of track: delta=0, FF 2F 00
+  parts[#parts + 1] = encode_vlq(0)
+  parts[#parts + 1] = string.char(0xFF, 0x2F, 0x00)
+  return table.concat(parts)
+end
+
+local function build_note_track(track_data)
+  local ch = (track_data.midi_channel - 1) & 0x0F -- 0-indexed for MIDI bytes
+  local events = {}
+
+  for _, note in ipairs(track_data.notes) do
+    local start_tick = beats_to_ticks(note.start_beats)
+    local end_tick = beats_to_ticks(note.start_beats + note.duration_beats)
+    -- Note on: 9n kk vv
+    events[#events + 1] = {
+      tick = start_tick,
+      data = string.char(0x90 | ch, note.pitch & 0x7F, note.velocity & 0x7F),
+      sort_order = 0, -- note-on before note-off at same tick
+    }
+    -- Note off: 8n kk 40
+    events[#events + 1] = {
+      tick = end_tick,
+      data = string.char(0x80 | ch, note.pitch & 0x7F, 0x40),
+      sort_order = 1, -- note-off after note-on at same tick
+    }
+  end
+
+  -- Sort by tick, then note-off before note-on at same tick
+  table.sort(events, function(a, b)
+    if a.tick ~= b.tick then return a.tick < b.tick end
+    return a.sort_order > b.sort_order
+  end)
+
+  -- Build track data with delta times
+  local parts = {}
+  local prev_tick = 0
+  for _, evt in ipairs(events) do
+    local delta = evt.tick - prev_tick
+    parts[#parts + 1] = encode_vlq(delta)
+    parts[#parts + 1] = evt.data
+    prev_tick = evt.tick
+  end
+  -- End of track
+  parts[#parts + 1] = encode_vlq(0)
+  parts[#parts + 1] = string.char(0xFF, 0x2F, 0x00)
+  return table.concat(parts)
+end
+
+local function write_midi_file(output_path, tempo_map, tracks)
+  local f = io.open(output_path, "wb")
+  if not f then
+    log("ERROR: Could not write MIDI to " .. output_path)
+    return false
+  end
+
+  local num_tracks = 1 + #tracks -- tempo track + note tracks
+  local total_notes = 0
+
+  -- MThd header
+  f:write("MThd")
+  write_u32be(f, 6)         -- header length
+  write_u16be(f, 1)         -- format 1
+  write_u16be(f, num_tracks) -- number of tracks
+  write_u16be(f, MIDI_PPQ)  -- ticks per quarter note
+
+  -- Track 0: tempo map
+  local tempo_data = build_tempo_track(tempo_map)
+  f:write("MTrk")
+  write_u32be(f, #tempo_data)
+  f:write(tempo_data)
+
+  -- Tracks 1–N: note data
+  for _, track_data in ipairs(tracks) do
+    local track_bytes = build_note_track(track_data)
+    f:write("MTrk")
+    write_u32be(f, #track_bytes)
+    f:write(track_bytes)
+    total_notes = total_notes + #track_data.notes
+  end
+
+  f:close()
+  log("Wrote: " .. output_path)
+  log("  MIDI tracks: " .. num_tracks .. " (1 tempo + " .. #tracks .. " note)")
+  log("  Total notes: " .. total_notes)
+  return true
+end
+
+----------------------------------------------------------------------
 -- Main
 ----------------------------------------------------------------------
 
@@ -352,6 +515,11 @@ local function main()
   f:close()
 
   log("Wrote: " .. output_path)
+
+  -- Write constrained MIDI file
+  local midi_path = output_dir .. "/snes_export.mid"
+  write_midi_file(midi_path, tempo_map, tracks)
+
   if warning_count > 0 then
     log("Completed with " .. warning_count .. " warning(s).")
   else

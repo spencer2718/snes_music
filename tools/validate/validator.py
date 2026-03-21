@@ -56,7 +56,7 @@ def load_export(export_dir: Path) -> dict:
         return json.load(f)
 
 
-def validate(data: dict) -> ValidationResult:
+def validate(data: dict, export_dir: Path | None = None) -> ValidationResult:
     result = ValidationResult()
     tracks = data.get("tracks", [])
     tempo_map = data.get("tempo_map", [])
@@ -70,6 +70,9 @@ def validate(data: dict) -> ValidationResult:
     _check_velocity(tracks, result)
     _check_regions(regions, result)
     _check_aram_budget(tracks, result)
+
+    if export_dir is not None:
+        _check_midi_file(export_dir, result)
 
     return result
 
@@ -150,6 +153,15 @@ def _check_regions(regions: list[dict], result: ValidationResult) -> None:
         start = region.get("start_beats", 0)
         end_ = region.get("end_beats", 0)
         result.info(f"  Region '{name}': beats {start}-{end_}")
+
+
+def _check_midi_file(export_dir: Path, result: ValidationResult) -> None:
+    midi_path = export_dir / "snes_export.mid"
+    if not midi_path.exists():
+        result.warning("Constrained MIDI file (snes_export.mid) not found in export directory")
+    else:
+        size = midi_path.stat().st_size
+        result.info(f"Constrained MIDI file present ({size} bytes)")
 
 
 def _check_aram_budget(tracks: list[dict], result: ValidationResult) -> None:

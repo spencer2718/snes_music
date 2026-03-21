@@ -49,6 +49,22 @@
 - Active note count for channel 1 shows "2"
 - This indicates a SNESGSS constraint violation: channels must be monophonic
 
+## MIDI export
+
+The constrained MIDI file (`snes_export.mid`) for this fixture should contain:
+
+- **Format:** 1 (multi-track)
+- **Tracks:** 5 total (1 tempo track + 4 note tracks)
+- **PPQ:** 480 ticks per quarter note
+- **Track 0 (tempo):** Single tempo event at tick 0 — 120 BPM (500000 μs/beat)
+- **Tracks 1–4 (notes):** Note-on (0x90+ch) and note-off (0x80+ch) events only
+  - Track 1: Lead on channel 0 (MIDI ch 1)
+  - Track 2: Bass on channel 1 (MIDI ch 2)
+  - Track 3: Pad on channel 2 (MIDI ch 3)
+  - Track 4: Arp on channel 3 (MIDI ch 4)
+- **No other events:** No CC, pitch bend, program change, or sysex
+- Each track ends with an end-of-track meta event (FF 2F 00)
+
 ### Voice limit case
 
 If all 8 channels have active notes simultaneously and a 9th voice would be needed, the summary line shows "Voices: X / 8" in red with "OVER LIMIT" warning. (Not testable with only 4 channels in this fixture, but documents the expected behavior.)
