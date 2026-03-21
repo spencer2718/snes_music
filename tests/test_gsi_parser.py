@@ -51,3 +51,13 @@ def test_parse_gsi_first_samples():
     assert inst.samples[1] == 0x08E1  # 2273
     assert inst.samples[2] == 0x11AD  # 4525
     assert inst.samples[3] == 0x1A4D  # 6733
+
+
+def test_parse_gsi_loop_fields():
+    """Verify loop fields are populated from waveform_sine.gsi."""
+    inst = parse_gsi(FIXTURE_GSI)
+    assert inst.loop_enable is True
+    assert inst.loop_start == 0
+    assert inst.loop_end == 63
+    assert isinstance(inst.loop_start, int)
+    assert isinstance(inst.loop_end, int)

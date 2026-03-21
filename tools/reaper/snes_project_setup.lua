@@ -100,83 +100,6 @@ local function create_midi_send(src_track, dst_track, midi_channel)
 end
 
 ----------------------------------------------------------------------
--- Set RS5K mode to "Note (Semitone shifted)"
--- Tries multiple approaches in priority order.
-----------------------------------------------------------------------
-
-local function try_mode_via_fx_state_chunk(track, fx_idx)
-  -- Approach 1: TrackFX_SetFXStateChunk (REAPER 7+)
-  -- Works at FX level, simpler than full track chunk
-  if not reaper.TrackFX_GetFXStateChunk then return false end
-
-  local ok, fx_chunk = reaper.TrackFX_GetFXStateChunk(track, fx_idx, "")
-  if not ok or fx_chunk == "" then return false end
-
-  log("  FX state chunk available (" .. #fx_chunk .. " chars)")
-  log("  FX chunk preview: " .. fx_chunk:sub(1, 200))
-
-  -- Look for a MODE field in the text portion of the FX chunk
-  -- Try replacing MODE 0 with MODE 1 if present as text
-  local modified = false
-  if fx_chunk:find("MODE %d") then
-    fx_chunk = fx_chunk:gsub("MODE 0", "MODE 1", 1)
-    modified = true
-  end
-
-  if modified then
-    reaper.TrackFX_SetFXStateChunk(track, fx_idx, fx_chunk)
-    log("  RS5K mode set via FX state chunk text replacement")
-    return true
-  end
-
-  return false
-end
-
-local function try_mode_via_named_config_with_focus(track, fx_idx)
-  -- Approach 2: SetNamedConfigParm with FX window visible
-  -- Some REAPER versions require the FX UI to be showing
-  reaper.SetOnlyTrackSelected(track)
-  reaper.TrackFX_Show(track, fx_idx, 3) -- show floating window
-
-  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
-
-  reaper.TrackFX_Show(track, fx_idx, 2) -- hide floating window
-
-  -- Check if it took effect by reading it back
-  local ok, val = reaper.TrackFX_GetNamedConfigParm(track, fx_idx, "MODE")
-  if ok and val == "1" then
-    log("  RS5K mode set via SetNamedConfigParm with focus")
-    return true
-  end
-
-  return false
-end
-
-local function try_mode_via_named_config_simple(track, fx_idx)
-  -- Approach 3: Simple SetNamedConfigParm after file load
-  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
-
-  local ok, val = reaper.TrackFX_GetNamedConfigParm(track, fx_idx, "MODE")
-  if ok and val == "1" then
-    log("  RS5K mode set via SetNamedConfigParm")
-    return true
-  end
-
-  return false
-end
-
-local function set_rs5k_mode_note(track, fx_idx)
-  -- Try each approach in order, stop at first success
-  if try_mode_via_named_config_simple(track, fx_idx) then return true end
-  if try_mode_via_fx_state_chunk(track, fx_idx) then return true end
-  if try_mode_via_named_config_with_focus(track, fx_idx) then return true end
-
-  log("[WARNING] Could not set RS5K mode — manual setting required")
-  log("  Open RS5K UI and change mode to 'Note (Semitone shifted)'")
-  return false
-end
-
-----------------------------------------------------------------------
 -- Load sample into RS5K on a track
 ----------------------------------------------------------------------
 
@@ -195,6 +118,10 @@ local function load_rs5k(track, sample_path, track_name)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "FILE0", sample_path)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "DONE", "")
 
+  -- NOTE: RS5K mode must be set manually to "Note (Semitone shifted)" for melodic tracks.
+  -- Automated mode setting is not supported via ReaScript in current REAPER versions.
+  -- For drum/percussion tracks, the default "Sample" mode is correct.
+
   -- Set note range: full 0-127
   reaper.TrackFX_SetParam(track, fx_idx, 3, 0.0)
   reaper.TrackFX_SetParam(track, fx_idx, 4, 1.0)
@@ -202,8 +129,8 @@ local function load_rs5k(track, sample_path, track_name)
   -- Enable "Obey note-offs" (param 11)
   reaper.TrackFX_SetParam(track, fx_idx, 11, 1.0)
 
-  -- Set mode to "Note (Semitone shifted)"
-  set_rs5k_mode_note(track, fx_idx)
+  -- Enable loop (param 12) — uses WAV smpl chunk loop points if present
+  reaper.TrackFX_SetParam(track, fx_idx, 12, 1.0)
 
   return true
 end

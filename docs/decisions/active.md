@@ -115,6 +115,13 @@ All exit criteria met in session 1. Date: 2026-03-21.
 - Constrained MIDI content validation in Python (parse and verify, not just existence check)
 - JSFX enhancements (echo config display, ARAM pressure, more than traffic-light)
 
+## RS5K mode setting
+Cannot be automated via ReaScript (not exposed as parameter, named config, or chunk field).
+Melodic tracks: user must manually switch to "Note (Semitone shifted)" after project setup.
+Drum/percussion tracks: default "Sample" mode is correct (triggers sample regardless of note pitch).
+Attempted: SetNamedConfigParm MODE, SetParam, binary state chunk modification — none worked.
+Revisit if REAPER exposes this in a future API update.
+
 ## v0.2 scope
 North star: hear SNES samples in REAPER during composition.
 Core path: BRR→WAV conversion + RS5K auto-loading.
