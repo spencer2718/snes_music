@@ -103,19 +103,6 @@ end
 -- Load sample into RS5K on a track
 ----------------------------------------------------------------------
 
-local rs5k_chunk_logged = false
-
-local function debug_rs5k_chunk(track)
-  if rs5k_chunk_logged then return end
-  rs5k_chunk_logged = true
-  local ok, chunk = reaper.GetTrackStateChunk(track, "", false)
-  if ok then
-    log("=== TRACK CHUNK (first 1000 chars) ===")
-    log(chunk:sub(1, 1000))
-    log("=== END CHUNK ===")
-  end
-end
-
 local function load_rs5k(track, sample_path, track_name)
   -- Add RS5K without opening its UI window
   local fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1000)
@@ -127,9 +114,17 @@ local function load_rs5k(track, sample_path, track_name)
     return false
   end
 
+  -- Try setting MODE before loading file (some RS5K versions need this order)
+  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
+
   -- Load sample file
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "FILE0", sample_path)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "DONE", "")
+
+  -- Try MODE again after file load + UI refresh (order-sensitive)
+  reaper.PreventUIRefresh(-1)
+  reaper.PreventUIRefresh(1)
+  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
 
   -- Set note range: full 0-127
   -- Param 3 = Note range start, Param 4 = Note range end (0.0-1.0 maps to 0-127)
@@ -138,9 +133,6 @@ local function load_rs5k(track, sample_path, track_name)
 
   -- Enable "Obey note-offs" (param 11)
   reaper.TrackFX_SetParam(track, fx_idx, 11, 1.0)
-
-  -- Debug: log the track state chunk for the first RS5K to discover mode field format
-  debug_rs5k_chunk(track)
 
   return true
 end
