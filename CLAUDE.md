@@ -45,8 +45,8 @@ pytest tests/                                                            # run t
 
 | Directory | Owns |
 |---|---|
+<!-- tools/export/ removed — SNESGSS integration is via MIDI import, not a code adapter -->
 | `tools/reaper/` | JSFX validator panel + Lua ReaScript exporter |
-| `tools/export/` | SNESGSS engine adapter |
 | `tools/validate/` | Python validation/build CLI |
 | `tools/samples/` | .gsi→WAV conversion tool |
 | `docs/decisions/` | Active decision records |
@@ -70,7 +70,7 @@ pytest tests/                                                            # run t
 - Transient findings → CC auto memory
 - Never duplicate the full spec in CLAUDE.md or memory
 
-## Non-goals (v0.1)
+## Non-goals
 
 1. Not a cross-DAW product
 2. Not a cycle-accurate SNES audio emulator/VST

@@ -74,14 +74,6 @@ This keeps the workflow frictionless — compose on a track, channel is implicit
 - Do not hex-edit spc700.bin header bytes
 - Wine requires relative paths for CLI export (absolute Unix paths don't work)
 
-### v0.1 acceptance test
-1. Launch SNESGSS via `wine ~/snes/snesgss/snesgss.exe`
-2. Create new project, define 4 placeholder instruments for channels 1–4
-3. Import snes_export.mid
-4. Verify notes appear on correct channels with correct timing
-5. Test whether tempo survives import
-6. Export via CLI → verify spc700.bin + music_0.bin are produced
-
 ## v0.1 status: COMPLETE
 All exit criteria met in session 1. Date: 2026-03-21.
 
@@ -102,6 +94,14 @@ All exit criteria met in session 1. Date: 2026-03-21.
 - Load instruments: F3
 - Import MIDI: Song → Import notes from MIDI → navigate Z:/home/spencer/snes/snes_music/exports/snes_export.mid
 - Wine needs Z: drive prefix to access Linux filesystem
+
+### Original acceptance test (historical)
+1. Launch SNESGSS via `wine ~/snes/snesgss/snesgss.exe`
+2. Create new project, define 4 placeholder instruments for channels 1–4
+3. Import snes_export.mid
+4. Verify notes appear on correct channels with correct timing
+5. Test whether tempo survives import
+6. Export via CLI → verify spc700.bin + music_0.bin are produced
 
 ### Open items for v0.2
 - ~~Lua project template script~~ → DONE: `snes_project_setup.lua`
