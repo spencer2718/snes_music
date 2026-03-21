@@ -103,54 +103,29 @@ end
 -- Load sample into RS5K on a track
 ----------------------------------------------------------------------
 
-local rs5k_params_logged = false
-
-local function log_rs5k_params(track, fx_idx)
-  if rs5k_params_logged then return end
-  rs5k_params_logged = true
-  log("  RS5K parameter discovery:")
-  for i = 0, 20 do
-    local ok, name = reaper.TrackFX_GetParamName(track, fx_idx, i)
-    if ok and name ~= "" then
-      local val = reaper.TrackFX_GetParam(track, fx_idx, i)
-      log("    param " .. i .. ": " .. name .. " = " .. val)
-    end
-  end
-end
-
 local function load_rs5k(track, sample_path, track_name)
   -- Add RS5K without opening its UI window
   local fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1000)
   if fx_idx < 0 then
     fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1)
-    if fx_idx >= 0 then
-      reaper.TrackFX_SetOpen(track, fx_idx, false)
-    end
   end
   if fx_idx < 0 then
     log("[WARNING] Could not add RS5K to '" .. track_name .. "'")
     return false
   end
 
-  -- Log parameter names on first RS5K instance (for debugging)
-  log_rs5k_params(track, fx_idx)
-
-  -- Set the sample file
+  -- Load sample file, then set mode (order matters: FILE0, DONE, then MODE)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "FILE0", sample_path)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "DONE", "")
-
-  -- Set mode to "Note (Semitone shifted)"
-  -- RS5K mode param is index 2. Normalized values:
-  --   0.0 = Sample (no pitch shift)
-  --   0.143 = Note (Semitone shifted) — mode 1 of ~7 modes
-  --   Other values select other modes
-  -- Try known common value; param discovery log above will confirm
-  reaper.TrackFX_SetParam(track, fx_idx, 2, 0.143)
+  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
 
   -- Set note range: full 0-127
-  -- Param 3 = note range start, param 4 = note range end
-  reaper.TrackFX_SetParam(track, fx_idx, 3, 0.0)    -- note range low = 0
-  reaper.TrackFX_SetParam(track, fx_idx, 4, 1.0)    -- note range high = 127
+  -- Param 3 = Note range start, Param 4 = Note range end (0.0-1.0 maps to 0-127)
+  reaper.TrackFX_SetParam(track, fx_idx, 3, 0.0)
+  reaper.TrackFX_SetParam(track, fx_idx, 4, 1.0)
+
+  -- Enable "Obey note-offs" (param 11)
+  reaper.TrackFX_SetParam(track, fx_idx, 11, 1.0)
 
   return true
 end
@@ -163,10 +138,11 @@ local function main()
   log("=== " .. SCRIPT_NAME .. " ===")
 
   -- Prompt for samples directory
+  local default_path = "/home/spencer/snes/snes_music/samples"
   local ok, samples_dir = reaper.GetUserInputs(
     SCRIPT_NAME, 1,
     "Samples directory (WAV files from .gsi converter):,extrawidth=300",
-    ""
+    default_path
   )
   if not ok or samples_dir == "" then
     log("Setup cancelled.")
@@ -231,6 +207,15 @@ local function main()
       channel = i,
       filename = sample.filename,
     }
+  end
+
+  -- Force-close all FX windows (belt and suspenders)
+  for i = 0, reaper.CountTracks(0) - 1 do
+    local track = reaper.GetTrack(0, i)
+    local fx_count = reaper.TrackFX_GetCount(track)
+    for j = 0, fx_count - 1 do
+      reaper.TrackFX_SetOpen(track, j, false)
+    end
   end
 
   -- End undo block
