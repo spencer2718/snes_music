@@ -37,15 +37,9 @@ def convert_gsi(gsi_path: Path, output_dir: Path, index: int) -> bool:
         wav_name = f"{index:02d}_{safe_name}.wav"
         wav_path = output_dir / wav_name
 
-        write_wav(
-            inst.samples, inst.source_rate, wav_path,
-            loop_enable=inst.loop_enable,
-            loop_start=inst.loop_start,
-            loop_end=inst.loop_end,
-        )
-        loop_str = " loop" if inst.loop_enable else ""
+        write_wav(inst.samples, inst.source_rate, wav_path)
         print(f"  OK   {gsi_path.name} → {wav_name} "
-              f"({len(inst.samples)} samples, {inst.source_rate} Hz{loop_str})")
+              f"({len(inst.samples)} samples, {inst.source_rate} Hz)")
         return True
     except Exception as e:
         print(f"  ERR  {gsi_path.name}: {e}")

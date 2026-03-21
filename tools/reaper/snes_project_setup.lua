@@ -129,9 +129,6 @@ local function load_rs5k(track, sample_path, track_name)
   -- Enable "Obey note-offs" (param 11)
   reaper.TrackFX_SetParam(track, fx_idx, 11, 1.0)
 
-  -- Enable loop (param 12) — uses WAV smpl chunk loop points if present
-  reaper.TrackFX_SetParam(track, fx_idx, 12, 1.0)
-
   return true
 end
 
