@@ -27,3 +27,11 @@ Each SNES voice maps to a MIDI channel (1–8). Use REAPER's native multi-channe
 
 No custom channel remap JSFX needed. Native REAPER feature.
 A Lua project template script may be added later for convenience (v0.2).
+
+## Channel assignment
+MIDI channel is determined by track position, not by note-level MIDI channel data.
+Tracks without MIDI items (e.g., the monitor track) are skipped.
+First MIDI track = channel 1, second = channel 2, up to 8.
+The "Build 16 channels" REAPER routing creates tracks in channel order,
+so track position matches the monitor's channel view.
+This keeps the workflow frictionless — compose on a track, channel is implicit.

@@ -124,7 +124,6 @@ local function get_notes_from_take(take)
         velocity = vel,
         start_beats = start_qn,
         duration_beats = end_qn - start_qn,
-        channel = chan, -- 0-indexed internally
       }
     end
   end
@@ -132,22 +131,47 @@ local function get_notes_from_take(take)
   return notes
 end
 
+local function track_has_midi(track)
+  local num_items = reaper.CountTrackMediaItems(track)
+  for item_idx = 0, num_items - 1 do
+    local item = reaper.GetTrackMediaItem(track, item_idx)
+    local num_takes = reaper.CountTakes(item)
+    for take_idx = 0, num_takes - 1 do
+      local take = reaper.GetTake(item, take_idx)
+      if take and reaper.TakeIsMIDI(take) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local function scan_tracks()
   local tracks = {}
   local num_tracks = reaper.CountTracks(0)
+  local midi_track_index = 0 -- counts MIDI-containing tracks for channel assignment
 
   for t = 0, num_tracks - 1 do
     local track = reaper.GetTrack(0, t)
     local ok, track_name = reaper.GetTrackName(track)
     if not ok then track_name = "Track " .. (t + 1) end
 
-    local all_notes = {}
-    local channels_seen = {}
-    local num_items = reaper.CountTrackMediaItems(track)
-
-    if num_items == 0 then
-      warn("Track '" .. track_name .. "' has no MIDI items")
+    -- Skip tracks with no MIDI items (e.g., the monitor track)
+    if not track_has_midi(track) then
+      goto continue
     end
+
+    midi_track_index = midi_track_index + 1
+
+    -- Cap at 8 SNES voices
+    if midi_track_index > MAX_CHANNELS then
+      warn("Track '" .. track_name .. "' exceeds 8-channel limit (position " .. midi_track_index .. "), skipping")
+      goto continue
+    end
+
+    -- Collect all notes from this track
+    local all_notes = {}
+    local num_items = reaper.CountTrackMediaItems(track)
 
     for item_idx = 0, num_items - 1 do
       local item = reaper.GetTrackMediaItem(track, item_idx)
@@ -159,76 +183,31 @@ local function scan_tracks()
           local notes = get_notes_from_take(take)
           for _, note in ipairs(notes) do
             all_notes[#all_notes + 1] = note
-            channels_seen[note.channel] = true
           end
         end
       end
     end
 
-    -- Determine the primary MIDI channel for this track
-    local primary_channel = nil
-    local channel_list = {}
-    for ch, _ in pairs(channels_seen) do
-      channel_list[#channel_list + 1] = ch
-    end
-
-    if #channel_list == 1 then
-      primary_channel = channel_list[1]
-    elseif #channel_list > 1 then
-      -- Multiple channels on one track — use the most common
-      local counts = {}
-      for _, note in ipairs(all_notes) do
-        counts[note.channel] = (counts[note.channel] or 0) + 1
-      end
-      local max_count = 0
-      for ch, count in pairs(counts) do
-        if count > max_count then
-          max_count = count
-          primary_channel = ch
-        end
-      end
-      warn("Track '" .. track_name .. "' has notes on multiple MIDI channels")
-    end
-
-    -- Warn about channels > 8
-    for ch, _ in pairs(channels_seen) do
-      if ch >= MAX_CHANNELS then
-        warn("Track '" .. track_name .. "' has notes on channel " .. (ch + 1) .. " (>8)")
-      end
-    end
-
-    -- Check for overlapping notes per channel
-    local notes_by_channel = {}
-    for _, note in ipairs(all_notes) do
-      local ch = note.channel
-      if not notes_by_channel[ch] then notes_by_channel[ch] = {} end
-      notes_by_channel[ch][#notes_by_channel[ch] + 1] = note
-    end
-
-    for ch, ch_notes in pairs(notes_by_channel) do
-      -- Sort by start time
-      table.sort(ch_notes, function(a, b) return a.start_beats < b.start_beats end)
-      for i = 2, #ch_notes do
-        local prev_end = ch_notes[i-1].start_beats + ch_notes[i-1].duration_beats
-        if ch_notes[i].start_beats < prev_end then
-          warn("Track '" .. track_name .. "' channel " .. (ch + 1) .. ": overlapping notes at beat " .. json_number(ch_notes[i].start_beats))
-        end
-      end
-    end
-
-    -- Sort all notes by start time for deterministic output
+    -- Check for overlapping notes (track = channel = must be monophonic)
     table.sort(all_notes, function(a, b)
       if a.start_beats ~= b.start_beats then return a.start_beats < b.start_beats end
       return a.pitch < b.pitch
     end)
 
-    if #all_notes > 0 then
-      tracks[#tracks + 1] = {
-        name = track_name,
-        midi_channel = primary_channel and (primary_channel + 1) or nil, -- 1-indexed for output
-        notes = all_notes,
-      }
+    for i = 2, #all_notes do
+      local prev_end = all_notes[i-1].start_beats + all_notes[i-1].duration_beats
+      if all_notes[i].start_beats < prev_end then
+        warn("Track '" .. track_name .. "' (channel " .. midi_track_index .. "): overlapping notes at beat " .. json_number(all_notes[i].start_beats))
+      end
     end
+
+    tracks[#tracks + 1] = {
+      name = track_name,
+      midi_channel = midi_track_index, -- assigned by position, 1-indexed
+      notes = all_notes,
+    }
+
+    ::continue::
   end
 
   return tracks
