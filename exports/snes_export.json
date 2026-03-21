@@ -19,7 +19,7 @@
     },
     {
       "name": "MIDI 2",
-      "midi_channel": 1,
+      "midi_channel": 2,
       "notes": [
         {"pitch": 66, "velocity": 96, "start_beats": 0, "duration_beats": 2},
         {"pitch": 60, "velocity": 96, "start_beats": 3, "duration_beats": 0.250000},
@@ -31,7 +31,7 @@
     },
     {
       "name": "MIDI 3",
-      "midi_channel": 1,
+      "midi_channel": 3,
       "notes": [
         {"pitch": 60, "velocity": 96, "start_beats": 0, "duration_beats": 2},
         {"pitch": 58, "velocity": 96, "start_beats": 2, "duration_beats": 2},
@@ -41,7 +41,7 @@
     },
     {
       "name": "MIDI 4",
-      "midi_channel": 1,
+      "midi_channel": 4,
       "notes": [
         {"pitch": 67, "velocity": 96, "start_beats": 0, "duration_beats": 0.125000},
         {"pitch": 67, "velocity": 96, "start_beats": 0.250000, "duration_beats": 0.125000},
