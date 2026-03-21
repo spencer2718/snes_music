@@ -1,4 +1,9 @@
-"""CLI entry point: python -m tools.samples convert <gsi_file_or_dir> --output <dir>"""
+"""CLI entry point for .gsi to WAV conversion.
+
+Usage:
+  python -m tools.samples convert <gsi_file_or_dir> --output <dir>
+  python -m tools.samples default --output <dir>
+"""
 
 import re
 import sys
@@ -6,6 +11,10 @@ from pathlib import Path
 
 from .gsi_parser import parse_gsi
 from .wav_writer import write_wav
+
+# Default SNESGSS instruments directory
+SNESGSS_INSTRUMENTS = Path.home() / "snes" / "snesgss" / "instruments"
+DEFAULT_SET_FILE = Path(__file__).parent / "default_set.txt"
 
 
 def sanitize_name(name: str) -> str:
@@ -37,21 +46,23 @@ def convert_gsi(gsi_path: Path, output_dir: Path, index: int) -> bool:
         return False
 
 
-def main() -> int:
-    if len(sys.argv) < 4 or sys.argv[1] != "convert":
-        print(
-            "Usage: python -m tools.samples convert <gsi_file_or_dir> --output <dir>",
-            file=sys.stderr,
-        )
+def find_output_dir(args: list[str]) -> Path | None:
+    """Parse --output <dir> from args."""
+    for i, arg in enumerate(args):
+        if arg == "--output" and i + 1 < len(args):
+            return Path(args[i + 1])
+    return None
+
+
+def cmd_convert(args: list[str]) -> int:
+    """Handle 'convert' subcommand."""
+    if len(args) < 3:
+        print("Usage: python -m tools.samples convert <gsi_file_or_dir> --output <dir>",
+              file=sys.stderr)
         return 2
 
-    source = Path(sys.argv[2])
-    output_dir = None
-
-    for i, arg in enumerate(sys.argv[3:], 3):
-        if arg == "--output" and i + 1 < len(sys.argv):
-            output_dir = Path(sys.argv[i + 1])
-            break
+    source = Path(args[0])
+    output_dir = find_output_dir(args[1:])
 
     if output_dir is None:
         print("Error: --output <dir> is required", file=sys.stderr)
@@ -59,7 +70,6 @@ def main() -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Collect .gsi files
     if source.is_file():
         gsi_files = [source]
     elif source.is_dir():
@@ -84,6 +94,71 @@ def main() -> int:
 
     print(f"\nDone: {success} converted, {errors} errors/skipped")
     return 0 if errors == 0 else 1
+
+
+def cmd_default(args: list[str]) -> int:
+    """Handle 'default' subcommand — convert the curated default set."""
+    output_dir = find_output_dir(args)
+    if output_dir is None:
+        print("Usage: python -m tools.samples default --output <dir>", file=sys.stderr)
+        return 2
+
+    if not DEFAULT_SET_FILE.exists():
+        print(f"Error: {DEFAULT_SET_FILE} not found", file=sys.stderr)
+        return 2
+
+    if not SNESGSS_INSTRUMENTS.is_dir():
+        print(f"Error: SNESGSS instruments not found at {SNESGSS_INSTRUMENTS}", file=sys.stderr)
+        print("Clone https://github.com/nathancassano/snesgss to ~/snes/snesgss/", file=sys.stderr)
+        return 2
+
+    filenames = [
+        line.strip() for line in DEFAULT_SET_FILE.read_text().splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+
+    if not filenames:
+        print("Error: default_set.txt is empty", file=sys.stderr)
+        return 2
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Converting {len(filenames)} default instruments to {output_dir}/")
+
+    success = 0
+    errors = 0
+    for idx, filename in enumerate(filenames, 1):
+        gsi_path = SNESGSS_INSTRUMENTS / filename
+        if not gsi_path.exists():
+            print(f"  ERR  {filename}: not found in {SNESGSS_INSTRUMENTS}")
+            errors += 1
+            continue
+        if convert_gsi(gsi_path, output_dir, idx):
+            success += 1
+        else:
+            errors += 1
+
+    print(f"\nDone: {success} converted, {errors} errors/skipped")
+    return 0 if errors == 0 else 1
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print(
+            "Usage:\n"
+            "  python -m tools.samples convert <gsi_file_or_dir> --output <dir>\n"
+            "  python -m tools.samples default --output <dir>",
+            file=sys.stderr,
+        )
+        return 2
+
+    cmd = sys.argv[1]
+    if cmd == "convert":
+        return cmd_convert(sys.argv[2:])
+    elif cmd == "default":
+        return cmd_default(sys.argv[2:])
+    else:
+        print(f"Unknown command: {cmd}", file=sys.stderr)
+        return 2
 
 
 sys.exit(main())

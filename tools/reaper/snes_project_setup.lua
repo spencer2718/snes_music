@@ -65,7 +65,15 @@ end
 ----------------------------------------------------------------------
 
 local function add_fx_by_name(track, fx_name)
-  local idx = reaper.TrackFX_AddByName(track, fx_name, false, -1)
+  -- Use -1000 - desired_position to add FX without opening its UI window
+  local idx = reaper.TrackFX_AddByName(track, fx_name, false, -1000)
+  if idx < 0 then
+    -- Fallback: try normal add, then close window
+    idx = reaper.TrackFX_AddByName(track, fx_name, false, -1)
+    if idx >= 0 then
+      reaper.TrackFX_SetOpen(track, idx, false)
+    end
+  end
   return idx >= 0 and idx or nil
 end
 
@@ -95,24 +103,52 @@ end
 -- Load sample into RS5K on a track
 ----------------------------------------------------------------------
 
+local rs5k_params_logged = false
+
+local function log_rs5k_params(track, fx_idx)
+  if rs5k_params_logged then return end
+  rs5k_params_logged = true
+  log("  RS5K parameter discovery:")
+  for i = 0, 20 do
+    local ok, name = reaper.TrackFX_GetParamName(track, fx_idx, i)
+    if ok and name ~= "" then
+      local val = reaper.TrackFX_GetParam(track, fx_idx, i)
+      log("    param " .. i .. ": " .. name .. " = " .. val)
+    end
+  end
+end
+
 local function load_rs5k(track, sample_path, track_name)
-  local fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1)
+  -- Add RS5K without opening its UI window
+  local fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1000)
+  if fx_idx < 0 then
+    fx_idx = reaper.TrackFX_AddByName(track, "ReaSamplOmatic5000", false, -1)
+    if fx_idx >= 0 then
+      reaper.TrackFX_SetOpen(track, fx_idx, false)
+    end
+  end
   if fx_idx < 0 then
     log("[WARNING] Could not add RS5K to '" .. track_name .. "'")
     return false
   end
 
+  -- Log parameter names on first RS5K instance (for debugging)
+  log_rs5k_params(track, fx_idx)
+
   -- Set the sample file
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "FILE0", sample_path)
   reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "DONE", "")
 
-  -- Set mode to "Note (Semitone shifted)" = mode 1
-  -- Parameter index for Mode varies; use named config
-  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
+  -- Set mode to "Note (Semitone shifted)"
+  -- RS5K mode param is index 2. Normalized values:
+  --   0.0 = Sample (no pitch shift)
+  --   0.143 = Note (Semitone shifted) — mode 1 of ~7 modes
+  --   Other values select other modes
+  -- Try known common value; param discovery log above will confirm
+  reaper.TrackFX_SetParam(track, fx_idx, 2, 0.143)
 
-  -- Set note range: 0-127 (full range)
-  -- Note range low = param 3, note range high = param 4 in RS5K
-  -- Values are 0.0-1.0 mapping to 0-127
+  -- Set note range: full 0-127
+  -- Param 3 = note range start, param 4 = note range end
   reaper.TrackFX_SetParam(track, fx_idx, 3, 0.0)    -- note range low = 0
   reaper.TrackFX_SetParam(track, fx_idx, 4, 1.0)    -- note range high = 127
 
