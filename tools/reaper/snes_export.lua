@@ -310,23 +310,40 @@ local function main()
   end
   log("Project: " .. project_name)
 
-  -- Choose output directory
-  local ok, output_dir = reaper.JS_Dialog_BrowseForFolder("Select export output folder", proj_path)
-  if not ok or not output_dir or output_dir == "" then
-    -- Fallback: try native GetUserInputs if JS extension not available
-    ok = false
-    local has_js = reaper.JS_Dialog_BrowseForFolder ~= nil
-    if not has_js then
-      local ret, val = reaper.GetUserInputs(SCRIPT_NAME, 1, "Output directory:,extrawidth=200", proj_path)
-      if ret then
-        output_dir = val
-        ok = true
-      end
+  -- Choose output directory (no JS extension dependency)
+  local ok = false
+  local output_dir = nil
+
+  -- Try JS folder browser if the extension happens to be installed
+  if reaper.JS_Dialog_BrowseForFolder then
+    local js_ok, js_dir = reaper.JS_Dialog_BrowseForFolder("Select export output folder", proj_path)
+    if js_ok and js_dir and js_dir ~= "" then
+      output_dir = js_dir
+      ok = true
     end
-    if not ok then
-      log("Export cancelled.")
-      return
+  end
+
+  -- Fallback: text input dialog (vanilla REAPER)
+  if not ok then
+    local ret, val = reaper.GetUserInputs(SCRIPT_NAME, 1, "Output directory:,extrawidth=200", proj_path)
+    if ret and val ~= "" then
+      output_dir = val
+      ok = true
     end
+  end
+
+  -- Last resort: confirm project path via message box
+  if not ok then
+    local confirm = reaper.MB("Export to:\n" .. proj_path .. "\n\nOK?", SCRIPT_NAME, 1)
+    if confirm == 1 then -- OK
+      output_dir = proj_path
+      ok = true
+    end
+  end
+
+  if not ok then
+    log("Export cancelled.")
+    return
   end
 
   log("Output directory: " .. output_dir)
