@@ -1,0 +1,67 @@
+{
+  "project_name": "Untitled",
+  "tempo_map": [
+    {"position_beats": 0, "bpm": 120, "time_sig_num": 4, "time_sig_den": 4}
+  ],
+  "regions": [],
+  "tracks": [
+    {
+      "name": "MIDI 1",
+      "midi_channel": 1,
+      "notes": [
+        {"pitch": 63, "velocity": 96, "start_beats": 0, "duration_beats": 1},
+        {"pitch": 61, "velocity": 96, "start_beats": 1, "duration_beats": 0.250000},
+        {"pitch": 63, "velocity": 96, "start_beats": 2, "duration_beats": 1},
+        {"pitch": 63, "velocity": 96, "start_beats": 4, "duration_beats": 1},
+        {"pitch": 61, "velocity": 96, "start_beats": 5, "duration_beats": 0.250000},
+        {"pitch": 63, "velocity": 96, "start_beats": 6, "duration_beats": 1}
+      ]
+    },
+    {
+      "name": "MIDI 2",
+      "midi_channel": 1,
+      "notes": [
+        {"pitch": 66, "velocity": 96, "start_beats": 0, "duration_beats": 2},
+        {"pitch": 60, "velocity": 96, "start_beats": 3, "duration_beats": 0.250000},
+        {"pitch": 60, "velocity": 96, "start_beats": 3.625000, "duration_beats": 0.250000},
+        {"pitch": 66, "velocity": 96, "start_beats": 4, "duration_beats": 2},
+        {"pitch": 60, "velocity": 96, "start_beats": 7, "duration_beats": 0.250000},
+        {"pitch": 60, "velocity": 96, "start_beats": 7.625000, "duration_beats": 0.250000}
+      ]
+    },
+    {
+      "name": "MIDI 3",
+      "midi_channel": 1,
+      "notes": [
+        {"pitch": 60, "velocity": 96, "start_beats": 0, "duration_beats": 2},
+        {"pitch": 58, "velocity": 96, "start_beats": 2, "duration_beats": 2},
+        {"pitch": 60, "velocity": 96, "start_beats": 4, "duration_beats": 1},
+        {"pitch": 59, "velocity": 96, "start_beats": 6.500000, "duration_beats": 1.500000}
+      ]
+    },
+    {
+      "name": "MIDI 4",
+      "midi_channel": 1,
+      "notes": [
+        {"pitch": 67, "velocity": 96, "start_beats": 0, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 0.250000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 0.500000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 0.750000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 1, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 1.250000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 1.500000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 1.750000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 2, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 4, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 4.250000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 4.500000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 4.750000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 5, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 5.250000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 5.500000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 5.750000, "duration_beats": 0.125000},
+        {"pitch": 67, "velocity": 96, "start_beats": 6, "duration_beats": 0.125000}
+      ]
+    }
+  ]
+}
