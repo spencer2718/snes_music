@@ -18,15 +18,11 @@ CC commits and pushes at end of every pass. PM pulls and reviews diffs.
 Established session 1. See CLAUDE.md repo conventions.
 
 ## REAPER authoring workflow
-Each SNES voice maps to a MIDI channel (1–8). Use REAPER's native multi-channel routing:
-1. Place SNES Channel Monitor JSFX on a dedicated track
-2. In the FX chain window, select the JSFX instance on the left
-3. Open the **FX menu** (top of window, not Options) → "Build 16 channels of MIDI routing to this track"
-4. REAPER creates 16 child tracks with per-channel sends. Delete tracks 9–16.
-5. Compose on tracks 1–8. Each track's MIDI arrives at the monitor on the correct channel.
+**Primary (automated):** Run `snes_project_setup.lua` from Actions menu. Provide samples directory path. Script creates monitor track, instrument tracks (1–8), MIDI routing, and RS5K instances.
+Melodic tracks: manually switch RS5K to "Note (Semitone shifted)" after setup.
+Drum tracks: leave RS5K in default "Sample" mode.
 
-No custom channel remap JSFX needed. Native REAPER feature.
-A Lua project template script may be added later for convenience (v0.2).
+**Manual alternative:** Place SNES Channel Monitor JSFX on a track, select it in the FX chain, FX menu → "Build 16 channels of MIDI routing to this track", delete tracks 9–16.
 
 ## Channel assignment
 MIDI channel is determined by track position, not by note-level MIDI channel data.
@@ -108,12 +104,15 @@ All exit criteria met in session 1. Date: 2026-03-21.
 - Wine needs Z: drive prefix to access Linux filesystem
 
 ### Open items for v0.2
-- Lua project template script (auto-create 8 tracks + monitor)
-- Drum channel support (SNESGSS channels 7–8, instruments 10–13)
-- Tempo import verification (does SNESGSS respect MIDI tempo or use native speed field?)
-- ARAM budget estimator with real sample sizes
-- Constrained MIDI content validation in Python (parse and verify, not just existence check)
-- JSFX enhancements (echo config display, ARAM pressure, more than traffic-light)
+- ~~Lua project template script~~ → DONE: `snes_project_setup.lua`
+- ~~BRR→WAV conversion~~ → DONE: `tools/samples/` (.gsi contains PCM, no BRR decoding needed)
+- ~~RS5K auto-loading~~ → DONE: setup script loads RS5K with samples
+- RS5K mode automation → DEFERRED: cannot be set via ReaScript, manual step required
+- Drum channel support (SNESGSS channels 7–8, instruments 10–13) → DEFERRED to v0.4+
+- Tempo import verification → UNTESTED (SNESGSS may ignore MIDI tempo)
+- ARAM budget estimator with real sample sizes → NOT STARTED
+- Constrained MIDI content validation in Python → NOT STARTED
+- JSFX enhancements → NOT STARTED
 
 ## RS5K mode setting
 Cannot be automated via ReaScript (not exposed as parameter, named config, or chunk field).
@@ -124,5 +123,26 @@ Revisit if REAPER exposes this in a future API update.
 
 ## v0.2 scope
 North star: hear SNES samples in REAPER during composition.
-Core path: BRR→WAV conversion + RS5K auto-loading.
-See SPEC.md §5a for full roadmap.
+Core path: .gsi→WAV conversion + RS5K auto-loading. **ACHIEVED.**
+
+Verified end-to-end: 6-channel song (piano, strings, synth bass, harp, kick, snare) composed in REAPER → exported → imported into SNESGSS → plays back correctly → exported to spc700.bin + music_0.bin.
+
+Known limitations:
+- RS5K mode must be set manually (melodic = "Note semitone shifted", drums = "Sample")
+- Short samples don't sustain well in RS5K (loop point embedding attempted, reverted — samples too short)
+- Velocity data exported but likely ignored by SNESGSS; mixing done in SNESGSS
+- SPC700 emulation VST deferred (would solve preview fidelity and sustain issues)
+
+Remaining v0.2 polish (not blocking):
+- Tempo import verification
+- MIDI content validation in Python
+- ARAM budget with real sample sizes
+
+### v0.2 acceptance test (verified)
+1. Composed 6-channel, 4-bar loop in REAPER (piano, strings, synth bass, harp, kick, snare)
+2. Exported via snes_export.lua → snes_export.json + snes_export.mid (1080 bytes, 7 tracks)
+3. Validated via Python CLI → PASS, 0 errors
+4. Imported into SNESGSS (Wine) → notes on correct channels, playback works
+5. Set loop in SNESGSS → loops correctly
+6. Exported from SNESGSS → spc700.bin + music_0.bin produced
+Full pipeline verified: REAPER → JSON + MIDI → SNESGSS → SNES-ready binaries

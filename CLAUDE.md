@@ -53,6 +53,7 @@ pytest tests/                                                            # run t
 | `docs/fixtures/` | Test fixtures and expected outputs |
 | `docs/design/` | Design documents and diagrams |
 | `exports/` | Generated export output (tracked) |
+| `samples/` | Converted WAV instrument files (gitignored, regenerated from .gsi) |
 
 ## Repo conventions
 

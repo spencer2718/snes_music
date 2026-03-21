@@ -118,11 +118,11 @@ Compose in REAPER → validate against SNES constraints → export constrained M
 Goal: Hear approximated SNES instrument sounds in real-time while composing.
 
 Key deliverables:
-- BRR-to-WAV conversion pipeline (extract samples from SNESGSS .gsi instruments, convert to WAV)
-- Lua script to auto-load WAV samples into RS5K instances across the 8 REAPER tracks
-- Tempo import verification (test whether SNESGSS respects MIDI tempo or requires manual speed setting)
-- Constrained MIDI content validation in the Python CLI (parse and verify, not just existence)
-- Updated ARAM budget estimator with real sample sizes
+- BRR-to-WAV conversion pipeline (extract samples from SNESGSS .gsi instruments, convert to WAV) — ✓ Done (.gsi contains raw PCM; `tools/samples/` converts to WAV)
+- Lua script to auto-load WAV samples into RS5K instances across the 8 REAPER tracks — ✓ Done (`snes_project_setup.lua`)
+- Tempo import verification (test whether SNESGSS respects MIDI tempo or requires manual speed setting) — Untested
+- Constrained MIDI content validation in the Python CLI (parse and verify, not just existence) — Not started
+- Updated ARAM budget estimator with real sample sizes — Not started
 
 Non-goals for v0.2:
 - Cycle-accurate SPC700 audio emulation (the RS5K preview is approximate — right samples, right pitches, not hardware-accurate DSP)
