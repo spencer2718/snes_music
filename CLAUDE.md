@@ -44,6 +44,7 @@ Authoring: use "FX menu → Build 16 channels of MIDI routing" on the monitor tr
 | `docs/decisions/` | Active decision records |
 | `docs/fixtures/` | Test fixtures and expected outputs |
 | `docs/design/` | Design documents and diagrams |
+| `exports/` | Generated export output (gitignored) |
 
 ## Repo conventions
 
