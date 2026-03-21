@@ -90,16 +90,21 @@ def _check_monophonic(tracks: list[dict], result: ValidationResult) -> None:
         channel = track.get("midi_channel", "?")
         notes = track.get("notes", [])
         sorted_notes = sorted(notes, key=lambda n: (n["start_beats"], n["pitch"]))
+        overlap_count = 0
+        first_beat = None
         for i in range(1, len(sorted_notes)):
             prev = sorted_notes[i - 1]
             curr = sorted_notes[i]
             prev_end = prev["start_beats"] + prev["duration_beats"]
             if curr["start_beats"] < prev_end:
-                result.error(
-                    f"Overlap on '{name}' (ch {channel}): "
-                    f"note at beat {curr['start_beats']} overlaps previous "
-                    f"(ends at beat {prev_end})"
-                )
+                overlap_count += 1
+                if first_beat is None:
+                    first_beat = curr["start_beats"]
+        if overlap_count > 0:
+            result.error(
+                f"Overlap on '{name}' (ch {channel}): "
+                f"{overlap_count} overlapping note(s), first at beat {first_beat}"
+            )
 
 
 def _check_note_range(tracks: list[dict], result: ValidationResult) -> None:
@@ -122,7 +127,7 @@ def _check_tempo_map(tempo_map: list[dict], result: ValidationResult) -> None:
     elif len(tempo_map) > 1:
         result.warning(
             f"Multiple tempo changes ({len(tempo_map)}) — "
-            f"supported but worth reviewing for v0.1"
+            f"supported but worth reviewing"
         )
 
 

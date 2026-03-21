@@ -194,11 +194,19 @@ local function scan_tracks()
       return a.pitch < b.pitch
     end)
 
+    local overlap_count = 0
+    local first_overlap_beat = nil
     for i = 2, #all_notes do
       local prev_end = all_notes[i-1].start_beats + all_notes[i-1].duration_beats
       if all_notes[i].start_beats < prev_end then
-        warn("Track '" .. track_name .. "' (channel " .. midi_track_index .. "): overlapping notes at beat " .. json_number(all_notes[i].start_beats))
+        overlap_count = overlap_count + 1
+        if not first_overlap_beat then
+          first_overlap_beat = all_notes[i].start_beats
+        end
       end
+    end
+    if overlap_count > 0 then
+      warn("Track '" .. track_name .. "' (channel " .. midi_track_index .. "): " .. overlap_count .. " overlapping note(s), first at beat " .. json_number(first_overlap_beat))
     end
 
     tracks[#tracks + 1] = {
@@ -467,7 +475,9 @@ local function main()
 
   -- Fallback: text input dialog (vanilla REAPER)
   if not ok then
-    local default_export = "/home/spencer/snes/snes_music/exports"
+    local script_path = ({reaper.get_action_context()})[2]
+    local repo_root = script_path:match("(.*)/tools/reaper/") or ""
+    local default_export = repo_root ~= "" and (repo_root .. "/exports") or ""
     local ret, val = reaper.GetUserInputs(SCRIPT_NAME, 1, "Output directory:,extrawidth=200", default_export)
     if ret and val ~= "" then
       output_dir = val
@@ -501,6 +511,12 @@ local function main()
 
   local tracks = scan_tracks()
   log("  Tracks with MIDI: " .. #tracks)
+
+  -- Warn if non-MIDI tracks are interspersed between MIDI tracks
+  local total_project_tracks = reaper.CountTracks(0)
+  if #tracks > 0 and total_project_tracks > #tracks + 1 then
+    warn("Non-MIDI track(s) detected between MIDI tracks — channel assignment may not match the monitor. Use contiguous MIDI tracks.")
+  end
 
   -- Serialize
   local json = build_json(project_name, tempo_map, regions, tracks)

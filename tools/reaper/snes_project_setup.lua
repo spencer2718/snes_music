@@ -140,7 +140,9 @@ local function main()
   log("=== " .. SCRIPT_NAME .. " ===")
 
   -- Prompt for samples directory
-  local default_path = "/home/spencer/snes/snes_music/samples"
+  local script_path = ({reaper.get_action_context()})[2]
+  local repo_root = script_path:match("(.*)/tools/reaper/") or ""
+  local default_path = repo_root ~= "" and (repo_root .. "/samples") or ""
   local ok, samples_dir = reaper.GetUserInputs(
     SCRIPT_NAME, 1,
     "Samples directory (WAV files from .gsi converter):,extrawidth=300",

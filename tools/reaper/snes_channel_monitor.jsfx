@@ -1,6 +1,8 @@
 desc:SNES Channel Monitor
 //tags:MIDI analysis SNES
 //author:snes_music project
+in_pin:none
+out_pin:none
 
 // Track active note counts for MIDI channels 1-8 (SNES voices).
 // Red = overlap violation (2+ simultaneous notes, SNESGSS requires monophonic).

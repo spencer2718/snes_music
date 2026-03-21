@@ -39,7 +39,8 @@ def convert_gsi(gsi_path: Path, output_dir: Path, index: int) -> bool:
 
         write_wav(inst.samples, inst.source_rate, wav_path)
         print(f"  OK   {gsi_path.name} → {wav_name} "
-              f"({len(inst.samples)} samples, {inst.source_rate} Hz)")
+              f"({len(inst.samples)} samples, {inst.source_rate} Hz) "
+              f"(pitch-corrected B+21→C)")
         return True
     except Exception as e:
         print(f"  ERR  {gsi_path.name}: {e}")
