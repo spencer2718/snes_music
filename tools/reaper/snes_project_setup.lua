@@ -100,111 +100,80 @@ local function create_midi_send(src_track, dst_track, midi_channel)
 end
 
 ----------------------------------------------------------------------
--- Base64 encode/decode (for RS5K state chunk modification)
+-- Set RS5K mode to "Note (Semitone shifted)"
+-- Tries multiple approaches in priority order.
 ----------------------------------------------------------------------
 
-local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-local B64_DECODE = {}
-for i = 1, #B64 do
-  B64_DECODE[B64:byte(i)] = i - 1
-end
-B64_DECODE[string.byte("=")] = 0
+local function try_mode_via_fx_state_chunk(track, fx_idx)
+  -- Approach 1: TrackFX_SetFXStateChunk (REAPER 7+)
+  -- Works at FX level, simpler than full track chunk
+  if not reaper.TrackFX_GetFXStateChunk then return false end
 
-local function b64_decode(data)
-  data = data:gsub("%s+", "")
-  local out = {}
-  for i = 1, #data, 4 do
-    local b1 = B64_DECODE[data:byte(i)] or 0
-    local b2 = B64_DECODE[data:byte(i + 1)] or 0
-    local b3 = B64_DECODE[data:byte(i + 2)] or 0
-    local b4 = B64_DECODE[data:byte(i + 3)] or 0
-    local n = (b1 << 18) | (b2 << 12) | (b3 << 6) | b4
-    out[#out + 1] = string.char((n >> 16) & 0xFF)
-    if data:byte(i + 2) ~= string.byte("=") then
-      out[#out + 1] = string.char((n >> 8) & 0xFF)
-    end
-    if data:byte(i + 3) ~= string.byte("=") then
-      out[#out + 1] = string.char(n & 0xFF)
-    end
-  end
-  return table.concat(out)
-end
+  local ok, fx_chunk = reaper.TrackFX_GetFXStateChunk(track, fx_idx, "")
+  if not ok or fx_chunk == "" then return false end
 
-local function b64_encode(data)
-  local out = {}
-  for i = 1, #data, 3 do
-    local b1 = data:byte(i)
-    local b2 = data:byte(i + 1) or 0
-    local b3 = data:byte(i + 2) or 0
-    local n = (b1 << 16) | (b2 << 8) | b3
-    out[#out + 1] = B64:sub(((n >> 18) & 0x3F) + 1, ((n >> 18) & 0x3F) + 1)
-    out[#out + 1] = B64:sub(((n >> 12) & 0x3F) + 1, ((n >> 12) & 0x3F) + 1)
-    if i + 1 <= #data then
-      out[#out + 1] = B64:sub(((n >> 6) & 0x3F) + 1, ((n >> 6) & 0x3F) + 1)
-    else
-      out[#out + 1] = "="
-    end
-    if i + 2 <= #data then
-      out[#out + 1] = B64:sub((n & 0x3F) + 1, (n & 0x3F) + 1)
-    else
-      out[#out + 1] = "="
-    end
+  log("  FX state chunk available (" .. #fx_chunk .. " chars)")
+  log("  FX chunk preview: " .. fx_chunk:sub(1, 200))
+
+  -- Look for a MODE field in the text portion of the FX chunk
+  -- Try replacing MODE 0 with MODE 1 if present as text
+  local modified = false
+  if fx_chunk:find("MODE %d") then
+    fx_chunk = fx_chunk:gsub("MODE 0", "MODE 1", 1)
+    modified = true
   end
-  return table.concat(out)
+
+  if modified then
+    reaper.TrackFX_SetFXStateChunk(track, fx_idx, fx_chunk)
+    log("  RS5K mode set via FX state chunk text replacement")
+    return true
+  end
+
+  return false
 end
 
-----------------------------------------------------------------------
--- Set RS5K mode via binary state chunk modification
-----------------------------------------------------------------------
+local function try_mode_via_named_config_with_focus(track, fx_idx)
+  -- Approach 2: SetNamedConfigParm with FX window visible
+  -- Some REAPER versions require the FX UI to be showing
+  reaper.SetOnlyTrackSelected(track)
+  reaper.TrackFX_Show(track, fx_idx, 3) -- show floating window
 
-local function set_rs5k_mode_note(track)
-  -- RS5K mode is stored in the VST binary state at byte offset 8 (uint32 LE).
-  -- Mode 0 = Sample, 1 = Note (Semitone shifted), 2 = Note (Frequency).
-  -- The mode is NOT accessible via SetNamedConfigParm or SetParam.
-  -- The 44-byte header is encoded as its own base64 segment (first line after VST header).
-  -- Header starts with "mosr" magic (base64: "bW9z").
+  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
 
-  local ok, chunk = reaper.GetTrackStateChunk(track, "", false)
-  if not ok then return false end
+  reaper.TrackFX_Show(track, fx_idx, 2) -- hide floating window
 
-  -- Find the RS5K VST block's first base64 line (starts with "bW9z" = "mosr" magic)
-  local header_b64 = chunk:match("(bW9z[A-Za-z0-9+/]+=*)")
-  if not header_b64 then
-    log("[WARNING] Could not find RS5K header in track chunk")
-    return false
+  -- Check if it took effect by reading it back
+  local ok, val = reaper.TrackFX_GetNamedConfigParm(track, fx_idx, "MODE")
+  if ok and val == "1" then
+    log("  RS5K mode set via SetNamedConfigParm with focus")
+    return true
   end
 
-  -- Decode header
-  local header_bin = b64_decode(header_b64)
-  if #header_bin < 12 then
-    log("[WARNING] RS5K header too short: " .. #header_bin .. " bytes")
-    return false
+  return false
+end
+
+local function try_mode_via_named_config_simple(track, fx_idx)
+  -- Approach 3: Simple SetNamedConfigParm after file load
+  reaper.TrackFX_SetNamedConfigParm(track, fx_idx, "MODE", "1")
+
+  local ok, val = reaper.TrackFX_GetNamedConfigParm(track, fx_idx, "MODE")
+  if ok and val == "1" then
+    log("  RS5K mode set via SetNamedConfigParm")
+    return true
   end
 
-  -- Verify magic "mosr" at bytes 0-3
-  if header_bin:sub(1, 4) ~= "mosr" then
-    log("[WARNING] RS5K header magic mismatch: " .. header_bin:sub(1, 4))
-    return false
-  end
+  return false
+end
 
-  -- Set byte 8 to 1 (Note Semitone shifted mode)
-  local current_mode = header_bin:byte(9) -- Lua strings are 1-indexed
-  if current_mode == 1 then
-    return true -- already in the right mode
-  end
+local function set_rs5k_mode_note(track, fx_idx)
+  -- Try each approach in order, stop at first success
+  if try_mode_via_named_config_simple(track, fx_idx) then return true end
+  if try_mode_via_fx_state_chunk(track, fx_idx) then return true end
+  if try_mode_via_named_config_with_focus(track, fx_idx) then return true end
 
-  header_bin = header_bin:sub(1, 8) .. string.char(1) .. header_bin:sub(10)
-
-  -- Re-encode
-  local new_header_b64 = b64_encode(header_bin)
-
-  -- Replace in chunk
-  chunk = chunk:gsub(header_b64, new_header_b64, 1)
-
-  -- Set the modified chunk back
-  reaper.SetTrackStateChunk(track, chunk, false)
-  log("  RS5K mode set to Note (Semitone shifted) via chunk edit")
-  return true
+  log("[WARNING] Could not set RS5K mode — manual setting required")
+  log("  Open RS5K UI and change mode to 'Note (Semitone shifted)'")
+  return false
 end
 
 ----------------------------------------------------------------------
@@ -233,8 +202,8 @@ local function load_rs5k(track, sample_path, track_name)
   -- Enable "Obey note-offs" (param 11)
   reaper.TrackFX_SetParam(track, fx_idx, 11, 1.0)
 
-  -- Set mode to "Note (Semitone shifted)" via binary chunk modification
-  set_rs5k_mode_note(track)
+  -- Set mode to "Note (Semitone shifted)"
+  set_rs5k_mode_note(track, fx_idx)
 
   return true
 end
