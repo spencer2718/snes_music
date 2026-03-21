@@ -85,3 +85,32 @@ This keeps the workflow frictionless — compose on a track, channel is implicit
 4. Verify notes appear on correct channels with correct timing
 5. Test whether tempo survives import
 6. Export via CLI → verify spc700.bin + music_0.bin are produced
+
+## v0.1 status: COMPLETE
+All exit criteria met in session 1. Date: 2026-03-21.
+
+### Exit criteria verification
+1. ✓ JSFX panel loads in REAPER, shows channel occupancy for channels 1–8
+2. ✓ Lua exporter emits intermediate JSON for test project (4 channels, 34 notes)
+3. ✓ Lua exporter emits constrained MIDI (Format 1, 5 tracks, 480 PPQ, 372 bytes)
+4. ✓ Python validator produces deterministic validation report (PASS) and build manifest with hashes
+5. ✓ Fixture project imports into SNESGSS via documented manual path:
+   - Wine on Ubuntu works (SNESGSS v1.42 via wine snesgss.exe)
+   - F3 to load instruments, Song → Import notes from MIDI
+   - Navigate via Z: drive to reach Linux filesystem
+   - Notes appear on correct channels, playback works
+6. ✓ Unsupported semantics reported explicitly (overlap warnings, >8 channel warnings, no-MIDI-item warnings)
+
+### SNESGSS import workflow (verified)
+- Launch: `cd ~/snes/snesgss && wine snesgss.exe`
+- Load instruments: F3
+- Import MIDI: Song → Import notes from MIDI → navigate Z:/home/spencer/snes/snes_music/exports/snes_export.mid
+- Wine needs Z: drive prefix to access Linux filesystem
+
+### Open items for v0.2
+- Lua project template script (auto-create 8 tracks + monitor)
+- Drum channel support (SNESGSS channels 7–8, instruments 10–13)
+- Tempo import verification (does SNESGSS respect MIDI tempo or use native speed field?)
+- ARAM budget estimator with real sample sizes
+- Constrained MIDI content validation in Python (parse and verify, not just existence check)
+- JSFX enhancements (echo config display, ARAM pressure, more than traffic-light)

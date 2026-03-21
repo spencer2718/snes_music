@@ -1,6 +1,6 @@
 # PRD / Bootstrap Spec — SNES Music Constraint/Export Tool
 
-## Status: Pre-implementation | v0.1
+## Status: v0.1 complete | 2026-03-21
 
 > **Normative sections:** 1–8, 12–14, 17. These define the product constraints, contracts, and exit criteria.
 > **Operational guidance:** 0, 9–11, 15–16, 18. These describe workflow, tooling, session practices, and open questions.
