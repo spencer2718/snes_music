@@ -467,7 +467,8 @@ local function main()
 
   -- Fallback: text input dialog (vanilla REAPER)
   if not ok then
-    local ret, val = reaper.GetUserInputs(SCRIPT_NAME, 1, "Output directory:,extrawidth=200", proj_path)
+    local default_export = "/home/spencer/snes/snes_music/exports"
+    local ret, val = reaper.GetUserInputs(SCRIPT_NAME, 1, "Output directory:,extrawidth=200", default_export)
     if ret and val ~= "" then
       output_dir = val
       ok = true
