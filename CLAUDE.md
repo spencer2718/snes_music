@@ -36,8 +36,9 @@ Authoring: use "FX menu → Build 16 channels of MIDI routing" on the monitor tr
 ## Build/test commands
 
 ```
-python -m tools.validate exports/     # validate export output
-pytest tests/                          # run test suite
+python -m tools.validate exports/                                        # validate export output
+python -m tools.samples convert path/to/file.gsi --output samples/       # convert .gsi to WAV
+pytest tests/                                                            # run test suite
 ```
 
 ## File ownership
@@ -47,6 +48,7 @@ pytest tests/                          # run test suite
 | `tools/reaper/` | JSFX validator panel + Lua ReaScript exporter |
 | `tools/export/` | SNESGSS engine adapter |
 | `tools/validate/` | Python validation/build CLI |
+| `tools/samples/` | .gsi→WAV conversion tool |
 | `docs/decisions/` | Active decision records |
 | `docs/fixtures/` | Test fixtures and expected outputs |
 | `docs/design/` | Design documents and diagrams |
