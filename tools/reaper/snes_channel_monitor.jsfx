@@ -1,0 +1,116 @@
+desc:SNES Channel Monitor
+//tags:MIDI analysis SNES
+//author:snes_music project
+
+// Track active note counts for MIDI channels 1-8 (SNES voices).
+// Red = overlap violation (2+ simultaneous notes, SNESGSS requires monophonic).
+
+@init
+
+// active_notes[0..7] = count of currently held notes per channel
+// Using instance variables (channel 0-7, 0-indexed internally, display 1-indexed)
+i = 0;
+loop(8,
+  active_notes[i] = 0;
+  i += 1;
+);
+
+@block
+
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & 0xF0;
+  ch = msg1 & 0x0F; // 0-indexed
+
+  // Only track channels 0-7 (display 1-8)
+  ch < 8 ? (
+    // Note on (status 0x90 with velocity > 0)
+    status == 0x90 && msg3 > 0 ? (
+      active_notes[ch] += 1;
+    );
+
+    // Note off (status 0x80, or note-on with velocity 0)
+    (status == 0x80 || (status == 0x90 && msg3 == 0)) ? (
+      active_notes[ch] -= 1;
+      active_notes[ch] < 0 ? active_notes[ch] = 0; // clamp
+    );
+  );
+
+  // Pass all MIDI through unmodified
+  midisend(offset, msg1, msg2, msg3);
+);
+
+@gfx 400 220
+
+// Layout constants
+bar_x = 40;       // left edge of bars (after channel label)
+bar_h = 20;       // height of each bar
+bar_gap = 4;      // vertical gap between bars
+max_bar_w = gfx_w - bar_x - 40; // leave room for count on right
+top_y = 10;
+
+gfx_setfont(1, "Arial", 14);
+
+total_voices = 0;
+i = 0;
+loop(8,
+  y = top_y + i * (bar_h + bar_gap);
+  count = active_notes[i];
+  count < 0 ? count = 0;
+  total_voices += (count > 0 ? 1 : 0);
+
+  // Channel label (1-indexed)
+  gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8;
+  gfx_x = 4; gfx_y = y + 3;
+  sprintf(#ch_label, "%d", i + 1);
+  gfx_drawstr(#ch_label);
+
+  // Bar background (dark)
+  gfx_r = 0.15; gfx_g = 0.15; gfx_b = 0.15;
+  gfx_x = bar_x; gfx_y = y;
+  gfx_rectto(bar_x + max_bar_w, y + bar_h);
+
+  // Bar color based on active note count
+  count == 0 ? (
+    // Inactive - dim green
+    gfx_r = 0.1; gfx_g = 0.3; gfx_b = 0.1;
+    bar_w = max_bar_w * 0.05; // thin sliver to show the channel exists
+  ) : count == 1 ? (
+    // One note active - green (monophonic OK)
+    gfx_r = 0.1; gfx_g = 0.8; gfx_b = 0.1;
+    bar_w = max_bar_w * 0.5;
+  ) : (
+    // 2+ notes - red (overlap violation)
+    gfx_r = 0.9; gfx_g = 0.1; gfx_b = 0.1;
+    bar_w = max_bar_w * min(count / 4, 1.0);
+  );
+
+  // Draw filled bar
+  gfx_x = bar_x; gfx_y = y;
+  gfx_rectto(bar_x + bar_w, y + bar_h);
+
+  // Note count label (right side)
+  gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8;
+  gfx_x = bar_x + max_bar_w + 6; gfx_y = y + 3;
+  sprintf(#count_label, "%d", count);
+  gfx_drawstr(#count_label);
+
+  i += 1;
+);
+
+// Summary line at bottom
+summary_y = top_y + 8 * (bar_h + bar_gap) + 4;
+
+total_voices > 8 ? (
+  gfx_r = 0.9; gfx_g = 0.1; gfx_b = 0.1;
+) : (
+  gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8;
+);
+
+gfx_x = 4; gfx_y = summary_y;
+sprintf(#summary, "Voices: %d / 8", total_voices);
+gfx_drawstr(#summary);
+
+total_voices > 8 ? (
+  gfx_x = 120; gfx_y = summary_y;
+  gfx_drawstr("  OVER LIMIT");
+);
