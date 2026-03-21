@@ -28,6 +28,8 @@ ln -s /home/spencer/snes/snes_music/tools/reaper ~/.config/REAPER/Effects/snes_m
 
 In REAPER: FX browser > JS > snes_music > snes_channel_monitor
 
+Authoring: use "FX menu → Build 16 channels of MIDI routing" on the monitor track. See `docs/decisions/active.md`.
+
 ## Build/test commands
 
 <!-- None yet. Update this section as commands are established. -->

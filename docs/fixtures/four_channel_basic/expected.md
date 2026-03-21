@@ -1,5 +1,16 @@
 # Fixture: four_channel_basic
 
+## Test setup
+
+1. Create a new REAPER project
+2. Add one empty track, name it "SNES Monitor"
+3. Add JSFX: FX browser > JS > snes_music > snes_channel_monitor
+4. With the FX chain window open and the JSFX selected, go to **FX menu** (top of FX chain window) → "Build 16 channels of MIDI routing to this track"
+5. REAPER creates 16 child tracks with per-channel MIDI sends. Delete tracks 9–16.
+6. Rename child tracks 1–4 to: "Lead", "Bass", "Pad", "Arp"
+7. Add MIDI items to tracks 1–4 with monophonic note sequences on their respective channels
+8. Tracks 5–8 remain empty (silent channels)
+
 ## Scenario
 
 4 MIDI tracks routed to channels 1–4, each playing a single monophonic melodic line. No overlapping notes within any channel. Channels 5–8 are silent.
