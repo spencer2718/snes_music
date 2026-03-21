@@ -216,6 +216,9 @@ Engineer (Claude Code)
     │  - Does NOT maintain cross-session reasoning — that's the PM's job
     │  - Uses native subagents for verbose/mechanical subtasks
     │  - Sole committer — all repo writes and CLI commands go through CC
+    │  - Commits and pushes at end of every instruction pass
+    │  - Commit message format: [pass] short description
+    │  - The PM reviews via git pull + diff
     ▼
 Repo filesystem (source of truth)
 ```
@@ -483,8 +486,8 @@ Each substantial work session should follow this rhythm:
 1. **Pull the repo.** Read `docs/decisions/active.md` and any recent commits.
 2. **Decide the session's goal.** One or two concrete deliverables, not a vague direction.
 3. **Write a scoped instruction for CC.** Include: what to build, what file(s) to touch, what test/fixture to use, what to avoid.
-4. **Let CC work.** Don't interrupt mid-implementation unless it's clearly off-track.
-5. **Pull and review.** Check: does the output match the instruction? Does it match the spec? Are there new decisions to record?
+4. **Let CC work.** Don't interrupt mid-implementation unless it's clearly off-track. CC will commit and push automatically at the end of each pass.
+5. **Pull and review.** CC has already committed and pushed — just `git pull` and review the diff. Check: does the output match the instruction? Does it match the spec? Are there new decisions to record?
 6. **Instruct CC to update `docs/decisions/active.md`** with anything learned.
 7. **Recommend compaction to the human** if the session was long or context is getting foggy. The human will run `/compact` on the CLI.
 8. **Repeat or end.**

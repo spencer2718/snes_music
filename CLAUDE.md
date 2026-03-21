@@ -38,6 +38,8 @@ REAPER-first authoring toolchain for SNES music composition. Compose in REAPER's
 - `snake_case` for all filenames
 - All commits via CC (sole committer)
 - `SPEC.md` is normative — if code contradicts the spec, fix the code or update the spec first
+- Every CC pass ends with a commit and push. Commit message format: `[pass] short description`. Never leave work uncommitted. The PM reviews diffs, not chat summaries.
+- CC reads `CLAUDE.md`, `docs/decisions/active.md`, and relevant `.claude/rules/` files at session start. If unsure about project state, read these before asking.
 - Keep this file under 80 lines
 
 ## Memory rules

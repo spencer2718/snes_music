@@ -1,5 +1,7 @@
 # SNES audio hardware constraints
 
+> Canonical constraint model: SPEC.md §8. This file has implementation-facing details only.
+
 ## Scope
 Any code that validates against or references SNES audio limits.
 
