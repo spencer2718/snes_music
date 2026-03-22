@@ -1,8 +1,0 @@
-=== Validation Report: PASS ===
-Errors: 0  Warnings: 0  Info: 4
-
---- INFO ---
-  [INFO]  Velocity variation present: 21-127 (4 distinct values)
-  [INFO]  Regions: 0
-  [INFO]  ARAM estimate: 12KB / 32KB sample budget (6 tracks × 2KB placeholder)
-  [INFO]  Constrained MIDI file present (1080 bytes)

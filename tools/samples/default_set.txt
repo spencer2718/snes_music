@@ -1,8 +1,0 @@
-piano_mid.gsi
-strings_2.gsi
-synth_bass_1.gsi
-synth_lead_1.gsi
-trumpet_2.gsi
-harp.gsi
-kick_1.gsi
-snare_1.gsi
