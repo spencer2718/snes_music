@@ -46,4 +46,4 @@ Then in REAPER: Actions > New action > Load ReaScript > navigate to `tools/reape
 
 `samples/snesgss/` contains instrument samples converted from SNESGSS's .gsi instrument library to 16-bit mono WAV. These are ready to load directly into C700.
 
-The samples are pitch-corrected (B+21 cents -> C) for standard MIDI note mapping.
+Samples are raw PCM extracted from SNESGSS .gsi files at original pitch. C700 handles pitch mapping via its DSP pitch register — no external correction needed. Set basekey=59 in C700 for correct tuning.
