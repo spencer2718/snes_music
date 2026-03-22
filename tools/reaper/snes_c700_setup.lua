@@ -58,6 +58,19 @@ for voice = 1, 8 do
   -- I_MIDIFLAGS: low 5 bits = source channel (0=all), bits 5-9 = dest channel (0=all, 1-16=ch)
   local midi_flags = voice * 32  -- dest channel = voice (1-8), source = 0 (all)
   reaper.SetTrackSendInfo_Value(voice_track, 0, send_idx, "I_MIDIFLAGS", midi_flags)
+
+  -- Insert a tiny MIDI item at beat 0 with a program change event
+  -- Program = voice-1 (Voice 1 → program 0, Voice 2 → program 1, etc.)
+  local item = reaper.CreateNewMIDIItemInProj(voice_track, 0, 0.01)
+  if item then
+    local take = reaper.GetActiveTake(item)
+    if take then
+      -- MIDI_InsertCC(take, selected, muted, ppqpos, chanmsg, chan, msg2, msg3)
+      -- Program change: chanmsg=0xC0, chan=0 (send remaps), msg2=program, msg3=0
+      reaper.MIDI_InsertCC(take, false, false, 0, 0xC0, 0, voice - 1, 0)
+      reaper.MIDI_Sort(take)
+    end
+  end
 end
 
 reaper.Undo_EndBlock("SNES C700 Project Setup", -1)
@@ -67,7 +80,10 @@ reaper.UpdateArrange()
 -- Print summary
 reaper.ShowConsoleMsg("\n=== SNES C700 Project Setup ===\n")
 reaper.ShowConsoleMsg("C700 instrument track created\n")
-reaper.ShowConsoleMsg("8 MIDI voice tracks created (channels 1-8)\n")
+reaper.ShowConsoleMsg("8 MIDI voice tracks with default program mapping:\n")
+for v = 1, 8 do
+  reaper.ShowConsoleMsg("  Voice " .. v .. " -> Channel " .. v .. " -> Program " .. (v-1) .. "\n")
+end
 reaper.ShowConsoleMsg("Samples path: " .. samples_path .. "\n")
 reaper.ShowConsoleMsg("Next: Open C700 editor > Load Sample > browse to samples/snesgss/\n")
 reaper.ShowConsoleMsg("Ready to compose!\n\n")
