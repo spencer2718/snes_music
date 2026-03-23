@@ -47,3 +47,13 @@ Then in REAPER: Actions > New action > Load ReaScript > navigate to `tools/reape
 `samples/snesgss/` contains instrument samples converted from SNESGSS's .gsi instrument library to 16-bit mono WAV. These are ready to load directly into C700.
 
 Samples are raw PCM extracted from SNESGSS .gsi files at original pitch. C700 handles pitch mapping via its DSP pitch register — no external correction needed. Set basekey=59 in C700 for correct tuning.
+
+## Testing
+
+Automated smoke tests for the C700 plugin live in `scripts/testing/` (not yet implemented — scripts will be added in a future pass):
+
+- `run_pluginval.sh` — runs Tracktion pluginval against the installed C700.vst3
+- `c700_smoke_test.lua` — ReaScript that instantiates C700, inserts a MIDI note, verifies non-silent output
+- `run_smoke.sh` — orchestrates both tests, writes a JSON report
+
+The full test harness plan is documented in `docs/planning/TEST_HARNESS_PRD.md` and will be activated after the C700 UI is stable for daily use.
