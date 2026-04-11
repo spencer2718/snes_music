@@ -1,19 +1,38 @@
 # SNES Music — REAPER + C700 Workflow
 
-Companion repo for [C700 Linux Fork](https://github.com/spencer2718/C700) — provides a REAPER action script for quick project setup and a library of SNESGSS instrument samples converted to WAV.
+Companion repo for the [C700 cross-platform fork](https://github.com/spencer2718/C700) — provides a REAPER action script for quick project setup and a library of SNESGSS instrument samples converted to WAV.
+
+The C700 fork is a JUCE/VST3 modernization of osoumen's original C700 plugin, supporting Windows (primary), macOS (secondary), and Linux (experimental).
 
 ## Prerequisites
 
-- REAPER on Linux
-- C700 VST3 installed (`~/.vst3/C700.vst3`) — see the [C700 fork](https://github.com/spencer2718/C700) for build instructions
+- REAPER (Windows, macOS, or Linux)
+- C700 VST3 installed — see the [C700 fork](https://github.com/spencer2718/C700) for cross-platform build instructions
 
 ## Setup
 
-Symlink the action scripts into REAPER's Effects folder so they auto-update with git pull:
+Make the action scripts available to REAPER by copying or symlinking `tools/reaper/` into REAPER's Effects folder.
+
+**Linux:**
 
 ```bash
 ln -s /path/to/snes_music/tools/reaper ~/.config/REAPER/Effects/snes_music
 ```
+
+**macOS:**
+
+```bash
+ln -s /path/to/snes_music/tools/reaper ~/Library/Application\ Support/REAPER/Effects/snes_music
+```
+
+**Windows:**
+
+```powershell
+# From PowerShell as admin (or use a symlink-friendly tool)
+New-Item -ItemType SymbolicLink -Path "$env:APPDATA\REAPER\Effects\snes_music" -Target "C:\path\to\snes_music\tools\reaper"
+```
+
+Or just copy the files directly if you prefer not to symlink.
 
 Then in REAPER: Actions > New action > Load ReaScript > navigate to `tools/reaper/snes_c700_setup.lua`
 
@@ -50,10 +69,4 @@ Samples are raw PCM extracted from SNESGSS .gsi files at original pitch. C700 ha
 
 ## Testing
 
-Automated smoke tests for the C700 plugin live in `scripts/testing/` (not yet implemented — scripts will be added in a future pass):
-
-- `run_pluginval.sh` — runs Tracktion pluginval against the installed C700.vst3
-- `c700_smoke_test.lua` — ReaScript that instantiates C700, inserts a MIDI note, verifies non-silent output
-- `run_smoke.sh` — orchestrates both tests, writes a JSON report
-
-The full test harness plan is documented in `docs/planning/TEST_HARNESS_PRD.md` and will be activated after the C700 UI is stable for daily use.
+Automated smoke tests for the C700 plugin will live in `scripts/testing/` (not yet implemented). The full test harness plan is documented in `docs/planning/TEST_HARNESS_PRD.md` and will be activated after the C700 UI is stable for daily use on Windows.
