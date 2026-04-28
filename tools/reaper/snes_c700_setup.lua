@@ -4,6 +4,7 @@
 
 -- Derive samples path from script location
 local script_path = ({reaper.get_action_context()})[2]
+script_path = script_path:gsub("\\", "/")
 local repo_root = script_path:match("(.*)/tools/reaper/") or ""
 local samples_path = repo_root .. "/samples/snesgss"
 
@@ -28,8 +29,8 @@ if fx_idx < 0 then
   reaper.PreventUIRefresh(-1)
   reaper.ShowMessageBox(
     "C700 VST3 not found.\n\n" ..
-    "Install it to ~/.vst3/ first:\n" ..
-    "  cd ~/snes/C700 && bash scripts/build-install.sh\n\n" ..
+    "Install or build C700 first, then rescan plugins.\n\n" ..
+    "See the C700 repo build instructions for your platform.\n\n" ..
     "Then rescan: Options > Preferences > VST > Re-scan",
     "C700 Setup Error", 0)
   return

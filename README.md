@@ -2,22 +2,16 @@
 
 Companion repo for the [C700 cross-platform fork](https://github.com/spencer2718/C700) — provides a REAPER action script for quick project setup and a library of SNESGSS instrument samples converted to WAV.
 
-The C700 fork is a JUCE/VST3 modernization of osoumen's original C700 plugin, supporting Windows (primary), macOS (secondary), and Linux (experimental).
+The C700 fork is a JUCE/VST3 modernization of osoumen's original C700 plugin, with Windows as the primary target and macOS as the secondary target.
 
 ## Prerequisites
 
-- REAPER (Windows, macOS, or Linux)
+- REAPER (Windows or macOS)
 - C700 VST3 installed — see the [C700 fork](https://github.com/spencer2718/C700) for cross-platform build instructions
 
 ## Setup
 
 Make the action scripts available to REAPER by copying or symlinking `tools/reaper/` into REAPER's Effects folder.
-
-**Linux:**
-
-```bash
-ln -s /path/to/snes_music/tools/reaper ~/.config/REAPER/Effects/snes_music
-```
 
 **macOS:**
 
